@@ -13,7 +13,8 @@ import {
   Sparkles,
   ExternalLink,
   Info,
-  X
+  X,
+  Leaf
 } from 'lucide-react';
 import { useSupplyChain } from '../../store/supplyChainStore';
 import { PaymentMethod, DeliveryAddress, DeliverySlot, ConsumerType, ConsumerOrder } from '../../types/supplyChain';
@@ -148,6 +149,26 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <span className="text-slate-500">AgMarknet Savings:</span>
                 <span className="font-bold text-emerald-600">₹{confirmedOrder.totalSavings.toLocaleString()}</span>
               </div>
+            </div>
+
+            {/* Eco Impact Savings Badge */}
+            <div className="bg-emerald-50 rounded-2xl p-3 border border-emerald-200 text-left flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <Leaf className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-emerald-950">
+                    🌱 Environmental Impact: ~2.4 kg CO₂ Saved
+                  </h4>
+                  <p className="text-[11px] text-emerald-800">
+                    Direct farmgate aggregation + Tata Ace EV zero-emission last-mile
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-200/60 px-2 py-0.5 rounded-full shrink-0">
+                1 Tree Offset
+              </span>
             </div>
 
             {/* Cross Screen CTA */}

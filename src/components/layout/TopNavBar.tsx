@@ -11,7 +11,8 @@ import {
   Monitor, 
   Sparkles,
   CheckCircle2,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Activity
 } from 'lucide-react';
 import { useSupplyChain } from '../../store/supplyChainStore';
 
@@ -30,7 +31,8 @@ export const TopNavBar: React.FC = () => {
     orders,
     batches,
     cartCount,
-    setIsAdminPriceControlOpen
+    setIsAdminPriceControlOpen,
+    setIsShockSimulatorOpen
   } = useSupplyChain();
 
   const pendingBatches = batches.filter(b => b.payoutStatus !== 'Paid').length;
@@ -169,6 +171,16 @@ export const TopNavBar: React.FC = () => {
             >
               <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-700" />
               <span className="hidden xl:inline">Price Control</span>
+            </button>
+
+            {/* Shock Simulator Button */}
+            <button
+              onClick={() => setIsShockSimulatorOpen(true)}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold border border-amber-300 shadow-xs transition-all"
+              title="Shock & What-If Simulator: Stress-test demand surges and climate shocks"
+            >
+              <Activity className="w-3.5 h-3.5 text-amber-600" />
+              <span className="hidden xl:inline">Shock Simulator</span>
             </button>
 
             {/* View Mode (Desktop vs Mobile Frame for consumer/driver) */}

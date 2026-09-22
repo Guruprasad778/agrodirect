@@ -8,6 +8,7 @@ import { ConsumerApp } from './components/screen1-consumer/ConsumerApp';
 import { FpoDashboard } from './components/screen2-fpo/FpoDashboard';
 import { DarkStoreDashboard } from './components/screen3-darkstore/DarkStoreDashboard';
 import { DriverApp } from './components/screen4-driver/DriverApp';
+import { ShockSimulatorModal } from './components/admin/ShockSimulatorModal';
 import { Sprout, ExternalLink, ShieldCheck, Database, Cpu, GitBranch } from 'lucide-react';
 
 const MainLayout: React.FC = () => {
@@ -46,6 +47,9 @@ const MainLayout: React.FC = () => {
 
       {/* Global Notifications */}
       <ToastContainer />
+
+      {/* Global Presenter Shock & What-If Simulator Modal */}
+      <ShockSimulatorModal />
 
       {/* Footer & Architecture Metadata */}
       <footer className="bg-white border-t border-slate-200 py-6 px-4 text-xs text-slate-500">

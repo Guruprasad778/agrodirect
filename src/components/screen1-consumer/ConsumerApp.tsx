@@ -15,7 +15,9 @@ import {
   Store,
   ChevronRight,
   Sparkles,
-  Info
+  Info,
+  QrCode,
+  Zap
 } from 'lucide-react';
 import { useSupplyChain } from '../../store/supplyChainStore';
 import { Product, DeliverySlot, ConsumerType, ConsumerOrder, DeliveryAddress } from '../../types/supplyChain';
@@ -24,6 +26,8 @@ import { CheckoutModal } from './CheckoutModal';
 import { PaymentModal } from './PaymentModal';
 import { MyOrdersView } from './MyOrdersView';
 import { AdminPriceControlModal } from '../admin/AdminPriceControlModal';
+import { CommunityGroupBuySection } from './CommunityGroupBuySection';
+import { FarmToForkQrModal } from './FarmToForkQrModal';
 
 export const ConsumerApp: React.FC = () => {
   const { 
@@ -38,7 +42,9 @@ export const ConsumerApp: React.FC = () => {
     setIsCheckoutOpen,
     isAdminPriceControlOpen, 
     setIsAdminPriceControlOpen,
-    setActiveScreen 
+    setActiveScreen,
+    setIsTraceModalOpen,
+    setSelectedTraceBatchId
   } = useSupplyChain();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -77,7 +83,10 @@ export const ConsumerApp: React.FC = () => {
   const handleAddToCart = (product: Product, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     const qty = getCardQty(product.id);
-    addToCart(product, qty);
+    const priceToUse = product.isFlashSaleActive && product.flashSalePrice 
+      ? product.flashSalePrice 
+      : product.platformPrice;
+    addToCart({ ...product, platformPrice: priceToUse }, qty);
   };
 
   const handleProceedToCheckout = () => {
@@ -226,6 +235,9 @@ export const ConsumerApp: React.FC = () => {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6">
         {activeTab === 'catalog' && (
           <>
+            {/* Community Group Buying Section */}
+            <CommunityGroupBuySection />
+
             {/* Banner: AgMarknet Transparency & Direct Procurement */}
             <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-emerald-50 to-teal-50 border border-emerald-200/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="flex items-start gap-3">
@@ -281,16 +293,20 @@ export const ConsumerApp: React.FC = () => {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {filteredProducts.map(product => {
-                const savingsPerKg = Math.max(0, product.currentMarketPrice - product.platformPrice);
+                const isFlash = Boolean(product.isFlashSaleActive && product.flashSalePrice);
+                const effectivePrice = isFlash ? product.flashSalePrice! : product.platformPrice;
+                const savingsPerKg = Math.max(0, product.currentMarketPrice - effectivePrice);
                 const discountPct = Math.round((savingsPerKg / product.currentMarketPrice) * 100);
                 const currentQty = getCardQty(product.id);
 
                 return (
                   <div
                     key={product.id}
-                    className="group bg-white rounded-2xl border border-slate-200/80 hover:border-emerald-300 shadow-xs hover:shadow-elevated transition-all duration-200 overflow-hidden flex flex-col justify-between"
+                    className={`group bg-white rounded-2xl border shadow-xs hover:shadow-elevated transition-all duration-200 overflow-hidden flex flex-col justify-between ${
+                      isFlash ? 'border-rose-300 ring-2 ring-rose-200/50' : 'border-slate-200/80 hover:border-emerald-300'
+                    }`}
                   >
-                    {/* Image Container with Badges */}
+                    {/* Image Container with Badges & Trace Action */}
                     <div 
                       onClick={() => setSelectedProduct(product)}
                       className="relative h-44 bg-slate-100 overflow-hidden cursor-pointer"
@@ -301,7 +317,28 @@ export const ConsumerApp: React.FC = () => {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         loading="lazy"
                       />
-                      <div className="absolute top-2.5 left-2.5 flex flex-col gap-1">
+
+                      {/* Trace Farmgate Action */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedTraceBatchId(product.id === 'PROD-TOMATO' ? 'HB-1042' : 'HB-1041');
+                          setIsTraceModalOpen(true);
+                        }}
+                        className="absolute top-2.5 right-2.5 px-2 py-1 rounded-lg bg-black/70 hover:bg-black text-white text-[10px] font-bold backdrop-blur-xs flex items-center gap-1 transition-colors shadow-xs z-10"
+                        title="Scan Farm-to-Fork Provenance"
+                      >
+                        <QrCode className="w-3 h-3 text-emerald-400" />
+                        <span>Trace</span>
+                      </button>
+
+                      <div className="absolute top-2.5 left-2.5 flex flex-col gap-1 z-10">
+                        {isFlash && (
+                          <span className="px-2 py-0.5 rounded-md bg-rose-600 text-white text-[10px] font-black backdrop-blur-xs shadow-xs flex items-center gap-1 animate-pulse">
+                            <Zap className="w-3 h-3 fill-current" />
+                            <span>FLASH SALE</span>
+                          </span>
+                        )}
                         <span className="px-2 py-0.5 rounded-md bg-emerald-600/90 text-white text-[10px] font-bold backdrop-blur-xs shadow-xs">
                           {product.qualityGrade}
                         </span>
@@ -338,10 +375,15 @@ export const ConsumerApp: React.FC = () => {
                       <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
                         <div>
                           <div className="flex items-baseline gap-1.5">
-                            <span className="text-lg font-black text-emerald-700">
-                              ₹{product.platformPrice}
+                            <span className={`text-lg font-black ${isFlash ? 'text-rose-600' : 'text-emerald-700'}`}>
+                              ₹{effectivePrice}
                             </span>
                             <span className="text-xs text-slate-400 font-normal">/{product.unit}</span>
+                            {isFlash && (
+                              <span className="text-xs line-through text-slate-400 ml-1">
+                                ₹{product.platformPrice}
+                              </span>
+                            )}
                             <span className="text-xs line-through text-slate-400 ml-1">
                               ₹{product.currentMarketPrice}
                             </span>
@@ -428,6 +470,9 @@ export const ConsumerApp: React.FC = () => {
 
       {/* MODAL 3: DEVELOPER / ADMIN PRICE CONTROL MODAL */}
       <AdminPriceControlModal />
+
+      {/* MODAL 4: FARM-TO-FORK QR TRACEABILITY MODAL */}
+      <FarmToForkQrModal />
 
       {/* Floating Bottom Cart Bar on Mobile when items in cart */}
       {cartCount > 0 && activeTab === 'catalog' && (

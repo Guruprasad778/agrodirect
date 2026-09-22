@@ -11,15 +11,19 @@ import {
   ArrowUpRight, 
   Calendar, 
   MapPin, 
-  Sparkles,
-  Building,
-  ScanLine,
-  Check,
-  Clock,
-  ChevronRight
+  Sparkles, 
+  Building, 
+  ScanLine, 
+  Check, 
+  Clock, 
+  ChevronRight,
+  Mic,
+  Wallet
 } from 'lucide-react';
 import { useSupplyChain } from '../../store/supplyChainStore';
 import { HarvestBatch, FPO } from '../../types/supplyChain';
+import { VoiceVernacularBotModal } from './VoiceVernacularBotModal';
+import { PreHarvestScannerModal } from './PreHarvestScannerModal';
 
 export const FpoDashboard: React.FC = () => {
   const { 
@@ -29,7 +33,12 @@ export const FpoDashboard: React.FC = () => {
     forecastData, 
     gradeBatch, 
     triggerFarmerPayout, 
-    setActiveScreen 
+    setActiveScreen,
+    expectedSupplies,
+    workingCapitalRequests,
+    requestWorkingCapitalAdvance,
+    setIsVoiceBotOpen,
+    setIsCropScannerOpen
   } = useSupplyChain();
 
   const [selectedFpoId, setSelectedFpoId] = useState<string>('FPO-KLR-01');
@@ -102,8 +111,28 @@ export const FpoDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* FPO Switcher & Date */}
-          <div className="flex items-center gap-3">
+          {/* FPO Switcher, Voice Bot & Crop Scanner Actions */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Action 1: Voice Bot */}
+            <button
+              onClick={() => setIsVoiceBotOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-all"
+              title="Voice-Guided Vernacular Assistant in Kannada, Hindi, Tamil & English"
+            >
+              <Mic className="w-3.5 h-3.5" />
+              <span>🎙️ Talk to Agri Assistant</span>
+            </button>
+
+            {/* Action 2: Crop Scanner */}
+            <button
+              onClick={() => setIsCropScannerOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition-all"
+              title="Pre-Harvest Computer Vision Crop Scanner"
+            >
+              <Camera className="w-3.5 h-3.5 text-emerald-400" />
+              <span>📷 Crop Scanner</span>
+            </button>
+
             <select
               value={selectedFpoId}
               onChange={(e) => setSelectedFpoId(e.target.value)}
@@ -429,6 +458,157 @@ export const FpoDashboard: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* EXPECTED SUPPLY (PRE-HARVEST REGISTRATION) & WORKING CAPITAL ADVANCE */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Expected Supply Section (7 cols) */}
+          <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-slate-900">
+                    Expected Supply: Pre-Harvest Intake
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                    Connected to Demand Forecast
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Future crop volume registered by farmers via Voice Bot & Pre-Harvest Scanner.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsVoiceBotOpen(true)}
+                  className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200 hover:bg-emerald-100 transition-colors flex items-center gap-1"
+                >
+                  <Mic className="w-3.5 h-3.5" />
+                  <span>+ Voice Supply</span>
+                </button>
+                <button
+                  onClick={() => setIsCropScannerOpen(true)}
+                  className="text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-200 transition-colors flex items-center gap-1"
+                >
+                  <Camera className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>+ Scan Plot</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-2.5">
+              {expectedSupplies.map(sup => (
+                <div 
+                  key={sup.id} 
+                  className="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/60 hover:bg-white transition-all flex flex-wrap items-center justify-between gap-3 text-xs"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+                      {sup.productName.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-900">{sup.productName}</span>
+                        <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-slate-200 text-slate-700">
+                          {sup.status}
+                        </span>
+                      </div>
+                      <span className="text-slate-500 block text-[11px]">
+                        Farmer: {sup.farmerName} • {sup.sourceLocation}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <span className="text-sm font-black text-emerald-800 block">
+                        {sup.quantityKg.toLocaleString()} kg
+                      </span>
+                      <span className="text-[10px] text-slate-500 block">
+                        Expected in {sup.daysRemaining} days ({sup.expectedDate})
+                      </span>
+                    </div>
+
+                    <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-[11px] font-bold border border-emerald-200">
+                      ✓ Confirmed
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Working Capital Advance Section (5 cols) */}
+          <div className="lg:col-span-5 bg-gradient-to-br from-emerald-50/60 via-teal-50/40 to-slate-50 rounded-2xl border border-emerald-200/80 p-5 shadow-xs flex flex-col justify-between space-y-4">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                    <IndianRupee className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">
+                      Working Capital Advance
+                    </h3>
+                    <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">
+                      Pre-Harvest Input Financing
+                    </span>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-200/70 text-emerald-900">
+                  Confirmed Forward Order
+                </span>
+              </div>
+
+              <p className="text-xs text-slate-600">
+                Qualify for zero-collateral working capital credit against verified forward demand orders before harvesting.
+              </p>
+
+              {/* Advance details */}
+              <div className="mt-3.5 space-y-2.5 text-xs">
+                <div className="p-3 bg-white rounded-xl border border-slate-200/90 shadow-xs space-y-2">
+                  <div className="flex items-center justify-between text-slate-500 text-[11px]">
+                    <span>Eligible Farmer:</span>
+                    <strong className="text-slate-900">Ramesh Kumar</strong>
+                  </div>
+                  <div className="flex items-center justify-between text-slate-500 text-[11px]">
+                    <span>Confirmed Demand:</span>
+                    <strong className="text-slate-900">500 kg Tomato</strong>
+                  </div>
+                  <div className="flex items-center justify-between text-slate-500 text-[11px]">
+                    <span>Estimated Order Value:</span>
+                    <strong className="text-slate-900">₹16,000</strong>
+                  </div>
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                    <span className="font-bold text-slate-800">Eligible Advance:</span>
+                    <span className="text-base font-black text-emerald-700">₹5,000</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              {workingCapitalRequests[0]?.status === 'Submitted' ? (
+                <div className="p-3 bg-emerald-100 text-emerald-900 rounded-xl text-xs font-bold flex items-center gap-2 border border-emerald-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+                  <span>Advance Request Submitted (Ref: WCA-KLR-7842)</span>
+                </div>
+              ) : (
+                <button
+                  onClick={() => requestWorkingCapitalAdvance('FARM-01', 5000)}
+                  className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all"
+                >
+                  <IndianRupee className="w-3.5 h-3.5" />
+                  <span>Request Advance (₹5,000)</span>
+                </button>
+              )}
+
+              <p className="text-[10px] text-slate-400 mt-2 text-center">
+                *Prototype simulation: Connectable to NABARD / RBI-regulated NBFC & Kisan Credit Card rails.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* COMPUTER VISION QUALITY GRADING & FARMER PAYOUT MODAL */}
@@ -630,6 +810,12 @@ export const FpoDashboard: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* VERNACULAR VOICE-GUIDED AGRI ASSISTANT BOT MODAL */}
+      <VoiceVernacularBotModal />
+
+      {/* PRE-HARVEST COMPUTER VISION CROP SCANNER MODAL */}
+      <PreHarvestScannerModal />
     </div>
   );
 };

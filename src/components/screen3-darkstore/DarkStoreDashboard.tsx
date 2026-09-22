@@ -13,7 +13,12 @@ import {
   ArrowUpRight,
   Sparkles,
   SlidersHorizontal,
-  ChevronRight
+  ChevronRight,
+  Radio,
+  Zap,
+  AlertTriangle,
+  Activity,
+  Check
 } from 'lucide-react';
 import { useSupplyChain } from '../../store/supplyChainStore';
 import { SortingStage } from '../../types/supplyChain';
@@ -33,7 +38,11 @@ export const DarkStoreDashboard: React.FC = () => {
     batches, 
     advanceBatchToHub, 
     assignBatchToSlot, 
-    setActiveScreen 
+    setActiveScreen,
+    iotTelemetry,
+    triggerIotAlert,
+    products,
+    toggleFlashSale
   } = useSupplyChain();
 
   const [activeStage, setActiveStage] = useState<SortingStage>('Sorted');
@@ -141,6 +150,206 @@ export const DarkStoreDashboard: React.FC = () => {
             </div>
             <p className="mt-2 text-[11px] text-amber-600 font-semibold">
               Driver Arun route staging
+            </p>
+          </div>
+        </div>
+
+        {/* TWO ADVANCED REAL-TIME MODULES: LIVE IOT REEFER TELEMATICS & DYNAMIC SURPLUS FLASH SALES */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Module 1: Live Cold-Chain Reefer IoT Telemetry (7 cols) */}
+          {(() => {
+            const isAlert = Boolean(iotTelemetry.isAlert || iotTelemetry.isAlertActive);
+            const vehicle = iotTelemetry.vehiclePlate || iotTelemetry.vehicleNumber || 'KA-04-E-8821';
+            const humidity = iotTelemetry.humidityPct ?? iotTelemetry.humidityPercent ?? 72;
+            const syncTime = iotTelemetry.lastSyncTime || iotTelemetry.timestamp || 'Just now';
+            const tempRange = iotTelemetry.targetTempRange || '2°C - 8°C';
+
+            return (
+              <div className={`lg:col-span-7 rounded-3xl border p-5 transition-all shadow-sm ${
+                isAlert 
+                  ? 'bg-rose-50 border-rose-300 ring-2 ring-rose-200' 
+                  : 'bg-white border-slate-200 hover:border-emerald-300'
+              }`}>
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${
+                      isAlert ? 'bg-rose-600 text-white animate-bounce' : 'bg-slate-900 text-sky-400'
+                    }`}>
+                      <Radio className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-slate-900">
+                          Cold-Chain Reefer IoT Telematics
+                        </h3>
+                        <span className="px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 text-[10px] font-bold">
+                          {vehicle}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        Live transit telemetry streaming from Kolar-Bengaluru line-haul
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Status & Trigger controls */}
+                  <div className="flex items-center gap-2">
+                    {isAlert ? (
+                      <button
+                        onClick={() => triggerIotAlert(false)}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Reset to 4.2°C Optimal</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => triggerIotAlert(true)}
+                        className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5"
+                      >
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        <span>Simulate Temp Spike (12.4°C)</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Telemetry Metrics Display */}
+                <div className="grid grid-cols-3 gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                  <div>
+                    <span className="text-[11px] font-medium text-slate-500 block">Temperature</span>
+                    <div className="flex items-baseline gap-1 mt-0.5">
+                      <span className={`text-2xl font-black ${
+                        isAlert ? 'text-rose-600 animate-pulse' : 'text-sky-700'
+                      }`}>
+                        {iotTelemetry.temperatureC}°C
+                      </span>
+                      <span className="text-[10px] text-slate-400">Target: {tempRange}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[11px] font-medium text-slate-500 block">Relative Humidity</span>
+                    <div className="flex items-baseline gap-1 mt-0.5">
+                      <span className="text-2xl font-black text-slate-800">
+                        {humidity}%
+                      </span>
+                      <span className="text-[10px] text-slate-400">RH (optimal)</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[11px] font-medium text-slate-500 block">Container Status</span>
+                    <span className={`inline-block mt-1 px-2.5 py-1 rounded-lg text-[11px] font-black ${
+                      isAlert ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'
+                    }`}>
+                      {isAlert ? '⚠️ THRESHOLD BREACH' : '✓ CHILLED OPTIMAL'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Alert Message Banner */}
+                <div className={`mt-3 p-3 rounded-xl text-xs flex items-center gap-2.5 ${
+                  isAlert 
+                    ? 'bg-rose-100/80 text-rose-900 border border-rose-200 font-medium' 
+                    : 'bg-emerald-50 text-emerald-900 border border-emerald-100'
+                }`}>
+                  <Activity className="w-4 h-4 shrink-0" />
+                  <div className="flex-1">
+                    <strong>Telematics Log:</strong> {iotTelemetry.alertMessage || 'Chiller refrigeration unit operating within optimal green range (4.2°C).'}
+                  </div>
+                  <span className="text-[10px] text-slate-500">{syncTime}</span>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Module 2: Surplus / Near-Expiry Inventory & Flash Sales (5 cols) */}
+          <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-200 p-5 shadow-sm hover:border-emerald-300 transition-all flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-xs">
+                    <Zap className="w-5 h-5 fill-current" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">
+                      Surplus & Flash Sale Engine
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Prevent post-harvest food waste via targeted discounting
+                    </p>
+                  </div>
+                </div>
+                <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">
+                  FEFO Bins
+                </span>
+              </div>
+
+              {/* Produce items with near-expiry surplus */}
+              <div className="space-y-2.5 mt-3">
+                {products.filter(p => p.id === 'PROD-TOMATO' || p.id === 'PROD-SPINACH' || p.id === 'PROD-ONION').slice(0, 2).map((prod) => {
+                  const isFlash = !!prod.isFlashSaleActive;
+                  const flashPrice = prod.flashSalePrice || Math.round(prod.platformPrice * 0.75);
+
+                  return (
+                    <div 
+                      key={prod.id}
+                      className={`p-3 rounded-2xl border transition-all ${
+                        isFlash ? 'bg-rose-50/70 border-rose-300' : 'bg-slate-50 border-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-bold text-slate-900">{prod.name}</span>
+                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 font-bold">
+                              ⏳ {prod.freshnessHoursRemaining || 18}h shelf-life left
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs font-bold text-slate-600">Stock: 120 kg</span>
+                            <span className="text-xs text-slate-400">•</span>
+                            <span className="text-xs text-slate-500">Normal: ₹{prod.platformPrice}/{prod.unit}</span>
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <span className={`text-base font-black ${isFlash ? 'text-rose-600' : 'text-slate-700'}`}>
+                            ₹{flashPrice}/{prod.unit}
+                          </span>
+                          <span className="text-[10px] text-emerald-600 font-bold block">
+                            25% OFF
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="mt-2.5 pt-2 border-t border-slate-200/60 flex items-center justify-between">
+                        <span className="text-[11px] text-slate-500">
+                          {isFlash ? '⚡ Live on Consumer App with Flash Badge' : 'Standard store price'}
+                        </span>
+                        <button
+                          onClick={() => toggleFlashSale(prod.id, !isFlash, flashPrice)}
+                          className={`px-3 py-1 rounded-xl text-xs font-bold transition-all shadow-2xs ${
+                            isFlash 
+                              ? 'bg-rose-600 hover:bg-rose-700 text-white' 
+                              : 'bg-slate-900 hover:bg-slate-800 text-amber-300'
+                          }`}
+                        >
+                          {isFlash ? 'Deactivate Flash' : '⚡ Activate Flash Sale'}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <p className="text-[11px] text-slate-400 mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+              <span>Admin manual pricing override respected</span>
+              <span className="text-emerald-700 font-semibold cursor-pointer hover:underline" onClick={() => setActiveScreen('consumer')}>
+                Check in Consumer App →
+              </span>
             </p>
           </div>
         </div>

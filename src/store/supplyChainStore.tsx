@@ -13,7 +13,11 @@ import {
   SortingStage,
   CartItem,
   DeliveryAddress,
-  PaymentMethod
+  PaymentMethod,
+  ExpectedSupply,
+  WorkingCapitalRequest,
+  IotSensorReading,
+  ShockScenarioState
 } from '../types/supplyChain';
 import { 
   INITIAL_PRODUCTS, 
@@ -23,10 +27,14 @@ import {
   INITIAL_DARK_STORE, 
   INITIAL_CONSUMER_ORDERS, 
   INITIAL_DRIVER,
-  INITIAL_DEMAND_FORECAST 
+  INITIAL_DEMAND_FORECAST,
+  INITIAL_EXPECTED_SUPPLIES,
+  INITIAL_WORKING_CAPITAL_REQUESTS,
+  INITIAL_IOT_READING
 } from '../data/mockData';
 import { demandForecastService } from '../services/demandForecastService';
 import { qualityGradingService } from '../services/qualityGradingService';
+import { iotMonitoringService } from '../services/iotMonitoringService';
 
 export interface ToastMessage {
   id: string;
@@ -65,6 +73,38 @@ interface SupplyChainContextType {
   setIsCheckoutOpen: (open: boolean) => void;
   isAdminPriceControlOpen: boolean;
   setIsAdminPriceControlOpen: (open: boolean) => void;
+
+  // New Feature Modals & State
+  expectedSupplies: ExpectedSupply[];
+  workingCapitalRequests: WorkingCapitalRequest[];
+  iotTelemetry: IotSensorReading;
+  shockScenario: ShockScenarioState;
+  isShockSimulatorOpen: boolean;
+  setIsShockSimulatorOpen: (open: boolean) => void;
+  isVoiceBotOpen: boolean;
+  setIsVoiceBotOpen: (open: boolean) => void;
+  isCropScannerOpen: boolean;
+  setIsCropScannerOpen: (open: boolean) => void;
+  isTraceModalOpen: boolean;
+  setIsTraceModalOpen: (open: boolean) => void;
+  selectedTraceBatchId: string | null;
+  setSelectedTraceBatchId: (id: string | null) => void;
+
+  // New Feature Actions
+  registerExpectedSupply: (data: {
+    productId: string;
+    productName: string;
+    farmerName: string;
+    quantityKg: number;
+    expectedDate: string;
+    daysRemaining: number;
+  }) => void;
+  requestWorkingCapitalAdvance: (farmerId: string, amount: number) => void;
+  joinCommunityGroupBuy: (productId: string, quantityKg: number) => void;
+  toggleFlashSale: (productId: string, active: boolean, flashPrice?: number) => void;
+  triggerIotAlert: (breach: boolean) => void;
+  applyShockScenario: (updates: Partial<ShockScenarioState>) => void;
+  resetShockScenario: () => void;
 
   // Cart Operations
   addToCart: (product: Product, quantityKg: number) => void;
@@ -191,6 +231,31 @@ export const SupplyChainProvider: React.FC<{ children: ReactNode }> = ({ childre
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isAdminPriceControlOpen, setIsAdminPriceControlOpen] = useState(false);
+
+  // New Feature States
+  const [expectedSupplies, setExpectedSupplies] = useState<ExpectedSupply[]>(INITIAL_EXPECTED_SUPPLIES);
+  const [workingCapitalRequests, setWorkingCapitalRequests] = useState<WorkingCapitalRequest[]>(INITIAL_WORKING_CAPITAL_REQUESTS);
+  const [iotTelemetry, setIotTelemetry] = useState<IotSensorReading>(INITIAL_IOT_READING);
+  const [shockScenario, setShockScenario] = useState<ShockScenarioState>({
+    demandSurgePercent: 0,
+    unseasonalRainActive: false,
+    priceShockActive: false
+  });
+
+  // Modal Visibility States
+  const [isShockSimulatorOpen, setIsShockSimulatorOpen] = useState(false);
+  const [isVoiceBotOpen, setIsVoiceBotOpen] = useState(false);
+  const [isCropScannerOpen, setIsCropScannerOpen] = useState(false);
+  const [isTraceModalOpen, setIsTraceModalOpen] = useState(false);
+  const [selectedTraceBatchId, setSelectedTraceBatchId] = useState<string | null>(null);
+
+  // Subscribe to live IoT telematics
+  useEffect(() => {
+    const unsubscribe = iotMonitoringService.subscribe(reading => {
+      setIotTelemetry(reading);
+    });
+    return unsubscribe;
+  }, []);
 
   // Navigation and demo states
   const [activeScreen, setActiveScreen] = useState<'consumer' | 'fpo' | 'darkstore' | 'driver'>('consumer');
@@ -554,6 +619,215 @@ export const SupplyChainProvider: React.FC<{ children: ReactNode }> = ({ childre
     setProducts(prev => [fullProduct, ...prev]);
     addToast('New Commodity Added', `${fullProduct.name} is now live on AgroDirect catalog`, 'success');
     return fullProduct;
+  };
+
+  /* =========================================================================
+   * 4. NEW FEATURE ACTIONS (Voice Bot, Capital, Group Buy, Flash Sales, Shock Sim)
+   * ========================================================================= */
+  const registerExpectedSupply = (data: {
+    productId: string;
+    productName: string;
+    farmerName: string;
+    quantityKg: number;
+    expectedDate: string;
+    daysRemaining: number;
+  }) => {
+    const prod = products.find(p => p.id === data.productId) || products[0];
+    const newSupply: ExpectedSupply = {
+      id: `SUP-${Date.now().toString().slice(-4)}`,
+      productId: data.productId,
+      productName: data.productName,
+      farmerId: 'FARM-01',
+      farmerName: data.farmerName || 'Ramesh Kumar',
+      quantityKg: data.quantityKg,
+      expectedDate: data.expectedDate,
+      daysRemaining: data.daysRemaining,
+      sourceFpoId: prod.sourceFpoId,
+      sourceFpoName: prod.sourceFpoName,
+      sourceLocation: prod.sourceLocation,
+      status: 'Registered'
+    };
+
+    setExpectedSupplies(prev => [newSupply, ...prev]);
+
+    // Synchronize into FPO available stock & intake projection
+    setFpos(prev => prev.map(f => {
+      if (f.id === prod.sourceFpoId) {
+        return {
+          ...f,
+          availableStockKg: f.availableStockKg + data.quantityKg
+        };
+      }
+      return f;
+    }));
+
+    addToast(
+      'Expected Supply Registered',
+      `${data.quantityKg} kg ${data.productName} registered for ${data.expectedDate} by ${data.farmerName}. Synchronized with FPO intake.`,
+      'success'
+    );
+  };
+
+  const requestWorkingCapitalAdvance = (farmerId: string, amount: number) => {
+    setWorkingCapitalRequests(prev => prev.map(req => {
+      if (req.farmerId === farmerId) {
+        return {
+          ...req,
+          requestedAdvance: amount,
+          status: 'Submitted'
+        };
+      }
+      return req;
+    }));
+
+    addToast(
+      'Advance Request Submitted',
+      `Working capital advance of ₹${amount.toLocaleString()} submitted for verification (Simulation Mode).`,
+      'success'
+    );
+  };
+
+  const joinCommunityGroupBuy = (productId: string, quantityKg: number) => {
+    setProducts(prev => prev.map(p => {
+      if (p.id === productId) {
+        const currentKg = (p.groupBuyCurrentKg || 0) + quantityKg;
+        const targetKg = p.groupBuyMinKg || 50;
+        const unlocked = currentKg >= targetKg;
+        return {
+          ...p,
+          groupBuyCurrentKg: currentKg,
+          platformPrice: unlocked ? (p.groupBuyPrice || p.platformPrice) : p.platformPrice
+        };
+      }
+      return p;
+    }));
+
+    const prod = products.find(p => p.id === productId);
+    const newKg = (prod?.groupBuyCurrentKg || 0) + quantityKg;
+    const targetKg = prod?.groupBuyMinKg || 50;
+
+    if (newKg >= targetKg) {
+      addToast(
+        '🎉 Bulk Group Price Unlocked!',
+        `Community reached ${newKg}/${targetKg} kg! Discounted price of ₹${prod?.groupBuyPrice}/kg unlocked for all participants!`,
+        'success'
+      );
+    } else {
+      addToast(
+        'Joined Group Buy Order',
+        `Added ${quantityKg} kg to group buy. Progress: ${newKg}/${targetKg} kg.`,
+        'info'
+      );
+    }
+  };
+
+  const toggleFlashSale = (productId: string, active: boolean, flashPrice?: number) => {
+    setProducts(prev => prev.map(p => {
+      if (p.id === productId) {
+        const updatedPrice = active && flashPrice ? flashPrice : (p.flashSalePrice || Math.max(1, p.platformPrice - 8));
+        return {
+          ...p,
+          isFlashSaleActive: active,
+          flashSalePrice: updatedPrice
+        };
+      }
+      return p;
+    }));
+
+    const prod = products.find(p => p.id === productId);
+    if (active) {
+      addToast(
+        '⚡ Flash Sale Activated!',
+        `Surplus near-expiry flash sale for ${prod?.name} set to ₹${flashPrice || prod?.flashSalePrice || 24}/kg. Live badge on Consumer App.`,
+        'warning'
+      );
+    } else {
+      addToast(
+        'Flash Sale Ended',
+        `Standard platform selling price restored for ${prod?.name}.`,
+        'info'
+      );
+    }
+  };
+
+  const triggerIotAlert = (breach: boolean) => {
+    if (breach) {
+      const alertReading = iotMonitoringService.triggerSpike();
+      setIotTelemetry(alertReading);
+      addToast(
+        '⚠️ Temperature Alert',
+        'Reefer Chiller temperature breached 8.0°C! Pre-cooling override triggered.',
+        'warning'
+      );
+    } else {
+      const normalReading = iotMonitoringService.resetToOptimal();
+      setIotTelemetry(normalReading);
+      addToast(
+        '✓ Chiller Normal',
+        'Reefer temperature restored to optimal 4.2°C.',
+        'success'
+      );
+    }
+  };
+
+  const applyShockScenario = (updates: Partial<ShockScenarioState>) => {
+    setShockScenario(prev => {
+      const next = { ...prev, ...updates };
+
+      if (updates.demandSurgePercent !== undefined) {
+        const multiplier = 1 + (updates.demandSurgePercent / 100);
+        setProducts(prevProds => prevProds.map(p => {
+          const base = INITIAL_PRODUCTS.find(ip => ip.id === p.id);
+          return {
+            ...p,
+            demand: Math.round((base?.demand || 1000) * multiplier),
+            expectedDemand: Math.round((base?.expectedDemand || 1100) * multiplier)
+          };
+        }));
+        setFpos(prevFpos => prevFpos.map(f => {
+          const base = INITIAL_FPOS.find(ib => ib.id === f.id);
+          return {
+            ...f,
+            incomingDemandKg: Math.round((base?.incomingDemandKg || 1200) * multiplier),
+            harvestRequirementKg: Math.round((base?.harvestRequirementKg || 1400) * multiplier)
+          };
+        }));
+      }
+
+      if (updates.unseasonalRainActive !== undefined) {
+        if (updates.unseasonalRainActive) {
+          setFpos(prevFpos => prevFpos.map(f => ({
+            ...f,
+            availableStockKg: Math.round(f.availableStockKg * 0.6)
+          })));
+          addToast(
+            '🌧️ Unseasonal Rain Simulated',
+            'Severe downpour in Kolar & Mandya belt. Harvest availability down 40%, logistics delay buffer +24h.',
+            'warning'
+          );
+        } else {
+          setFpos(INITIAL_FPOS);
+          addToast('Weather Cleared', 'Optimal harvesting conditions restored across all FPO clusters.', 'info');
+        }
+      }
+
+      if (updates.priceShockActive !== undefined && updates.priceShockProductId && updates.priceShockNewPrice) {
+        updateProductPrice(updates.priceShockProductId, updates.priceShockNewPrice);
+      }
+
+      return next;
+    });
+  };
+
+  const resetShockScenario = () => {
+    setShockScenario({
+      demandSurgePercent: 0,
+      unseasonalRainActive: false,
+      priceShockActive: false
+    });
+    setProducts(INITIAL_PRODUCTS);
+    setFpos(INITIAL_FPOS);
+    addToast('Simulation Reset', 'All shock parameters restored to baseline.', 'info');
   };
 
   /* =========================================================================
@@ -944,6 +1218,27 @@ export const SupplyChainProvider: React.FC<{ children: ReactNode }> = ({ childre
       setIsCheckoutOpen,
       isAdminPriceControlOpen,
       setIsAdminPriceControlOpen,
+      expectedSupplies,
+      workingCapitalRequests,
+      iotTelemetry,
+      shockScenario,
+      isShockSimulatorOpen,
+      setIsShockSimulatorOpen,
+      isVoiceBotOpen,
+      setIsVoiceBotOpen,
+      isCropScannerOpen,
+      setIsCropScannerOpen,
+      isTraceModalOpen,
+      setIsTraceModalOpen,
+      selectedTraceBatchId,
+      setSelectedTraceBatchId,
+      registerExpectedSupply,
+      requestWorkingCapitalAdvance,
+      joinCommunityGroupBuy,
+      toggleFlashSale,
+      triggerIotAlert,
+      applyShockScenario,
+      resetShockScenario,
       addToCart,
       updateCartQuantity,
       removeFromCart,

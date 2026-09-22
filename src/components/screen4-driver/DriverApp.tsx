@@ -14,13 +14,17 @@ import {
   Sparkles,
   Layers,
   ArrowRight,
-  RotateCcw
+  RotateCcw,
+  Radio,
+  Leaf,
+  AlertTriangle,
+  Activity
 } from 'lucide-react';
 import { useSupplyChain } from '../../store/supplyChainStore';
 import { DeliveryStop } from '../../types/supplyChain';
 
 export const DriverApp: React.FC = () => {
-  const { driver, markDeliveryCompleted, setActiveScreen } = useSupplyChain();
+  const { driver, markDeliveryCompleted, setActiveScreen, iotTelemetry } = useSupplyChain();
   const [selectedStop, setSelectedStop] = useState<DeliveryStop | null>(driver.stops[0] || null);
   const [activeTab, setActiveTab] = useState<'map' | 'stops'>('map');
 
@@ -143,6 +147,104 @@ export const DriverApp: React.FC = () => {
             ))}
           </div>
         </div>
+
+        {/* DUAL TELEMATICS & ECO IMPACT CARDS */}
+        {(() => {
+          const isAlert = Boolean(iotTelemetry.isAlert || iotTelemetry.isAlertActive);
+          const vehicle = iotTelemetry.vehiclePlate || iotTelemetry.vehicleNumber || 'KA-04-E-8821';
+          const humidity = iotTelemetry.humidityPct ?? iotTelemetry.humidityPercent ?? 72;
+
+          return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Card 1: Onboard Reefer Chiller IoT Sensor */}
+              <div className={`p-4 rounded-2xl border transition-all ${
+                isAlert 
+                  ? 'bg-rose-950/60 border-rose-500/80 ring-1 ring-rose-500' 
+                  : 'bg-slate-950/80 border-slate-800'
+              }`}>
+                <div className="flex items-center justify-between mb-2.5">
+                  <div className="flex items-center gap-2">
+                    <div className={`p-1.5 rounded-lg ${
+                      isAlert ? 'bg-rose-500 text-white animate-pulse' : 'bg-sky-500/20 text-sky-400'
+                    }`}>
+                      <Radio className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-white">Onboard Reefer Chiller</h4>
+                      <span className="text-[10px] text-slate-400 font-mono">Sensors: SHT40 + ESP32</span>
+                    </div>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                    isAlert 
+                      ? 'bg-rose-500/30 text-rose-300 border border-rose-500/50' 
+                      : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                  }`}>
+                    {isAlert ? 'TEMP ALERT' : 'CHILLED 4.2°C'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Chamber Temp</span>
+                    <span className={`text-xl font-black ${
+                      isAlert ? 'text-rose-400' : 'text-sky-400'
+                    }`}>
+                      {iotTelemetry.temperatureC}°C
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Humidity</span>
+                    <span className="text-xl font-black text-slate-200">
+                      {humidity}%
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Vehicle Box</span>
+                    <span className="text-xs font-bold text-slate-300">
+                      {vehicle}
+                    </span>
+                  </div>
+                </div>
+
+                {isAlert && (
+                  <div className="mt-2.5 p-2 rounded-lg bg-rose-900/60 border border-rose-700/60 text-[11px] text-rose-200 flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                    <span>Critical spike: Chiller re-engagement command triggered.</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Card 2: Green Fleet Route Eco Impact */}
+              <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400">
+                        <Leaf className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-white">Route Eco Impact</h4>
+                        <span className="text-[10px] text-emerald-400 font-medium">Tata Ace EV Logistics</span>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      Zero Emission
+                    </span>
+                  </div>
+
+                  <div className="flex items-baseline gap-1 mt-1">
+                    <span className="text-2xl font-black text-emerald-400">24.8 kg</span>
+                    <span className="text-xs text-slate-400">CO₂ emissions prevented</span>
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-slate-400 mt-2 pt-2 border-t border-slate-800/80">
+                  OR-Tools TSP dynamic routing reduced route by 35.8 km vs traditional uncoordinated diesel mandi trips.
+                </p>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* INTERACTIVE DELIVERY MAP VIEW */}
         <div className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden shadow-lg">

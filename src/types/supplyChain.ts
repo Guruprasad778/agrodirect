@@ -106,6 +106,12 @@ export interface Product {
   mandiBenchmarkLocation: string;
   shelfLifeDays: number;
   inStock?: boolean;
+  groupBuyPrice?: number;         // Admin-configured bulk group price
+  groupBuyMinKg?: number;         // Target threshold e.g. 50 kg
+  groupBuyCurrentKg?: number;     // Current accumulated group quantity
+  isFlashSaleActive?: boolean;    // Near-expiry / surplus flash sale toggle
+  flashSalePrice?: number;        // Admin-configured flash sale price
+  freshnessHoursRemaining?: number; // Hours left before shelf-life deterioration
 }
 
 export interface Farmer {
@@ -245,3 +251,71 @@ export interface DemandForecastPoint {
   lowerBoundKg?: number;
   upperBoundKg?: number;
 }
+
+export interface ExpectedSupply {
+  id: string;
+  productId: string;
+  productName: string;
+  farmerId: string;
+  farmerName: string;
+  quantityKg: number;
+  expectedDate: string;
+  daysRemaining: number;
+  sourceFpoId: string;
+  sourceFpoName: string;
+  sourceLocation: string;
+  status: 'Registered' | 'Inspected' | 'Harvest Ready';
+}
+
+export interface PreHarvestScanResult {
+  crop: string;
+  readinessDays: string;
+  diseasePestIndication: string;
+  harvestWindow: string;
+  qualityGrade: 'Grade A' | 'Grade B' | 'Grade C';
+  potentialYieldKg: string;
+  recommendedAction: string;
+  confidence: number;
+  sampleImageUrl?: string;
+}
+
+export interface WorkingCapitalRequest {
+  id: string;
+  farmerId: string;
+  farmerName: string;
+  fpoName: string;
+  crop: string;
+  confirmedDemandKg: number;
+  estimatedOrderValue: number;
+  eligibleAdvance: number;
+  requestedAdvance: number;
+  status: 'Eligible' | 'Submitted' | 'Approved';
+  requestDate: string;
+  repaymentTerms: string;
+}
+
+export interface IotSensorReading {
+  temperatureC: number;
+  humidityPercent: number;
+  humidityPct?: number;
+  vehicleNumber: string;
+  vehiclePlate?: string;
+  driverName: string;
+  isAlert: boolean;
+  isAlertActive?: boolean;
+  alertMessage?: string;
+  targetTempRange?: string;
+  timestamp: string;
+  lastSyncTime?: string;
+  location: string;
+}
+
+export interface ShockScenarioState {
+  demandSurgePercent: number;       // e.g. 0 to 100%
+  unseasonalRainActive: boolean;    // true reduces availability by 40%
+  priceShockActive: boolean;
+  priceShockProductId?: string;
+  priceShockNewPrice?: number;
+  priceShockType?: 'none' | 'fuel_spike' | 'mandi_shortage';
+}
+

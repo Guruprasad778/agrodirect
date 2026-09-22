@@ -25,7 +25,8 @@ export const AdminPriceControlModal: React.FC = () => {
     updateProductDetails, 
     addNewProduct, 
     isAdminPriceControlOpen, 
-    setIsAdminPriceControlOpen 
+    setIsAdminPriceControlOpen,
+    toggleFlashSale 
   } = useSupplyChain();
 
   const [isAddingNew, setIsAddingNew] = useState(false);
@@ -239,6 +240,8 @@ export const AdminPriceControlModal: React.FC = () => {
                   <th className="py-3 px-4">Commodity</th>
                   <th className="py-3 px-2">AgMarknet Ref</th>
                   <th className="py-3 px-4 text-center">Our Selling Price</th>
+                  <th className="py-3 px-2 text-center">Group Buy (₹)</th>
+                  <th className="py-3 px-2 text-center">Flash Sale (₹)</th>
                   <th className="py-3 px-2">Grade</th>
                   <th className="py-3 px-2">Stock (kg)</th>
                   <th className="py-3 px-4 text-right">Availability</th>
@@ -331,6 +334,46 @@ export const AdminPriceControlModal: React.FC = () => {
                           >
                             +5
                           </button>
+                        </div>
+                      </td>
+
+                      {/* Group Buy Manual Price */}
+                      <td className="py-3 px-2 text-center">
+                        <div className="inline-flex items-center bg-white border border-emerald-300 rounded-lg px-2 py-0.5 shadow-2xs">
+                          <span className="text-xs font-bold text-emerald-700">₹</span>
+                          <input
+                            type="number"
+                            value={product.groupBuyPrice || Math.round(product.platformPrice * 0.85)}
+                            onChange={(e) => updateProductDetails(product.id, { groupBuyPrice: Number(e.target.value) })}
+                            className="w-10 text-center text-xs font-black text-slate-900 focus:outline-none"
+                            title="Manual Community Group Buy Price"
+                          />
+                        </div>
+                      </td>
+
+                      {/* Flash Sale Manual Price & Toggle */}
+                      <td className="py-3 px-2 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => toggleFlashSale(product.id, !product.isFlashSaleActive, product.flashSalePrice || Math.round(product.platformPrice * 0.75))}
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-extrabold transition-all ${
+                              product.isFlashSaleActive ? 'bg-rose-600 text-white' : 'bg-slate-200 text-slate-700'
+                            }`}
+                            title="Toggle Flash Sale"
+                          >
+                            {product.isFlashSaleActive ? 'ON' : 'OFF'}
+                          </button>
+                          <div className="inline-flex items-center bg-white border border-rose-300 rounded-lg px-1.5 py-0.5 shadow-2xs">
+                            <span className="text-[11px] font-bold text-rose-600">₹</span>
+                            <input
+                              type="number"
+                              value={product.flashSalePrice || Math.round(product.platformPrice * 0.75)}
+                              onChange={(e) => updateProductDetails(product.id, { flashSalePrice: Number(e.target.value) })}
+                              className="w-8 text-center text-xs font-black text-rose-700 focus:outline-none"
+                              title="Manual Flash Sale Price"
+                            />
+                          </div>
                         </div>
                       </td>
 

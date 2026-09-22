@@ -1,4 +1,16 @@
-import { Product, Farmer, FPO, HarvestBatch, DarkStoreHub, Driver, ConsumerOrder, DemandForecastPoint } from '../types/supplyChain';
+import { 
+  Product, 
+  Farmer, 
+  FPO, 
+  HarvestBatch, 
+  DarkStoreHub, 
+  Driver, 
+  ConsumerOrder, 
+  DemandForecastPoint,
+  ExpectedSupply,
+  WorkingCapitalRequest,
+  IotSensorReading 
+} from '../types/supplyChain';
 
 export const INITIAL_PRODUCTS: Product[] = [
   {
@@ -20,6 +32,12 @@ export const INITIAL_PRODUCTS: Product[] = [
     image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=600&auto=format&fit=crop&q=80',
     mandiBenchmarkLocation: 'Kolar APMC Mandi',
     shelfLifeDays: 5,
+    groupBuyPrice: 28,
+    groupBuyMinKg: 50,
+    groupBuyCurrentKg: 47,
+    isFlashSaleActive: false,
+    flashSalePrice: 24,
+    freshnessHoursRemaining: 18,
   },
   {
     id: 'PROD-ONION',
@@ -697,3 +715,76 @@ export const INITIAL_DEMAND_FORECAST: DemandForecastPoint[] = [
   { date: '23 Sep', day: 'Mon', forecastKg: 1380, lowerBoundKg: 1310, upperBoundKg: 1440 },
   { date: '24 Sep', day: 'Tue', forecastKg: 1420, lowerBoundKg: 1350, upperBoundKg: 1490 }
 ];
+
+export const INITIAL_EXPECTED_SUPPLIES: ExpectedSupply[] = [
+  {
+    id: 'SUP-TOM-01',
+    productId: 'PROD-TOMATO',
+    productName: 'Tomato (Hybrid Desi)',
+    farmerId: 'FARM-01',
+    farmerName: 'Ramesh Kumar',
+    quantityKg: 500,
+    expectedDate: '26 Sep 2026',
+    daysRemaining: 5,
+    sourceFpoId: 'FPO-KLR-01',
+    sourceFpoName: 'Kolar Horti Farmers FPO',
+    sourceLocation: 'Srinivaspur, Kolar',
+    status: 'Registered'
+  },
+  {
+    id: 'SUP-ONN-02',
+    productId: 'PROD-ONION',
+    productName: 'Nashik Red Onion',
+    farmerId: 'FARM-02',
+    farmerName: 'Suresh Gowda',
+    quantityKg: 350,
+    expectedDate: '28 Sep 2026',
+    daysRemaining: 7,
+    sourceFpoId: 'FPO-NSK-02',
+    sourceFpoName: 'Sahyadri Farmer Collective',
+    sourceLocation: 'Lasalgaon, Nashik',
+    status: 'Registered'
+  },
+  {
+    id: 'SUP-POT-03',
+    productId: 'PROD-POTATO',
+    productName: 'Agra Jyoti Potato',
+    farmerId: 'FARM-03',
+    farmerName: 'Lakshmamma B.',
+    quantityKg: 600,
+    expectedDate: '29 Sep 2026',
+    daysRemaining: 8,
+    sourceFpoId: 'FPO-AGR-03',
+    sourceFpoName: 'Ganga Yamuna Krishak FPO',
+    sourceLocation: 'Agra, Uttar Pradesh',
+    status: 'Registered'
+  }
+];
+
+export const INITIAL_WORKING_CAPITAL_REQUESTS: WorkingCapitalRequest[] = [
+  {
+    id: 'WCA-KLR-7842',
+    farmerId: 'FARM-01',
+    farmerName: 'Ramesh Kumar',
+    fpoName: 'Kolar Horti Farmers FPO',
+    crop: 'Tomato (Hybrid Desi)',
+    confirmedDemandKg: 500,
+    estimatedOrderValue: 16000,
+    eligibleAdvance: 5000,
+    requestedAdvance: 5000,
+    status: 'Eligible',
+    requestDate: '21 Sep 2026',
+    repaymentTerms: 'Auto-deducted upon FPO dispatch & digital payout'
+  }
+];
+
+export const INITIAL_IOT_READING: IotSensorReading = {
+  temperatureC: 4.2,
+  humidityPercent: 72,
+  vehicleNumber: 'KA-04-E-8821',
+  driverName: 'Arun Kumar',
+  isAlert: false,
+  timestamp: 'Just now',
+  location: 'Indiranagar MFC-04 Cold Dock'
+};
+
