@@ -118,6 +118,18 @@ const MANDI_RECORDS: Record<string, AgMarknetPriceRecord> = {
     modalPrice: 42,
     reportedDate: '2026-09-21',
     source: 'AgMarknet 2.0 Real-Time Feed',
+  },
+  'PROD-MILK': {
+    commodity: 'Milk',
+    variety: 'A2 Buffalo Farm Fresh',
+    state: 'Karnataka',
+    district: 'Mandya',
+    marketName: 'Mandya Milk Union (BAMUL/KMF Benchmark)',
+    minPrice: 52,
+    maxPrice: 60,
+    modalPrice: 56,
+    reportedDate: '2026-09-21',
+    source: 'AgMarknet 2.0 Real-Time Feed',
   }
 };
 

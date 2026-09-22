@@ -41,7 +41,7 @@ export const ConsumerApp: React.FC = () => {
     setActiveScreen 
   } = useSupplyChain();
 
-  const [searchQuery, setSearchQuery] = useState('Tomatoes');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [activeTab, setActiveTab] = useState<'catalog' | 'cart' | 'orders'>('catalog');
@@ -72,7 +72,7 @@ export const ConsumerApp: React.FC = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const categories = ['All', 'Vegetables', 'Staples', 'Fruits'];
+  const categories = ['All', 'Vegetables', 'Fruits', 'Staples', 'Dairy'];
 
   const handleAddToCart = (product: Product, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -188,13 +188,13 @@ export const ConsumerApp: React.FC = () => {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search farm fresh commodities (e.g. Tomatoes, Onions, Potatoes)..."
-                  className="w-full pl-10 pr-4 py-2 bg-slate-100/80 hover:bg-slate-100 focus:bg-white border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                  placeholder="Search fresh produce..."
+                  className="w-full pl-10 pr-16 py-2 bg-slate-100/80 hover:bg-slate-100 focus:bg-white border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                 />
                 {searchQuery && (
                   <button 
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 hover:text-emerald-700 bg-slate-200/60 hover:bg-slate-200 px-2 py-0.5 rounded-md transition-colors"
                   >
                     Clear
                   </button>
@@ -257,7 +257,29 @@ export const ConsumerApp: React.FC = () => {
             </div>
 
             {/* Produce Grid with Direct Add to Cart */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {filteredProducts.length === 0 ? (
+              <div className="text-center py-16 bg-white rounded-2xl border border-slate-200/80 p-8 shadow-xs">
+                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400 mb-3">
+                  <Search className="w-6 h-6" />
+                </div>
+                <h3 className="text-base font-bold text-slate-800">No produce found</h3>
+                <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                  {searchQuery 
+                    ? `No commodities matched "${searchQuery}". Try a different search term or reset filters.`
+                    : `No produce found under category "${selectedCategory}".`}
+                </p>
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedCategory('All');
+                  }}
+                  className="mt-4 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm"
+                >
+                  Show All Products
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {filteredProducts.map(product => {
                 const savingsPerKg = Math.max(0, product.currentMarketPrice - product.platformPrice);
                 const discountPct = Math.round((savingsPerKg / product.currentMarketPrice) * 100);
@@ -364,6 +386,7 @@ export const ConsumerApp: React.FC = () => {
                 );
               })}
             </div>
+            )}
           </>
         )}
 

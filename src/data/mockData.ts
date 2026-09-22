@@ -180,6 +180,26 @@ export const INITIAL_PRODUCTS: Product[] = [
     image: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=600&auto=format&fit=crop&q=80',
     mandiBenchmarkLocation: 'Bhopal Mandi',
     shelfLifeDays: 180,
+  },
+  {
+    id: 'PROD-MILK',
+    name: 'Fresh Farm Buffalo Milk',
+    category: 'Dairy',
+    variety: 'A2 Pure Unadulterated',
+    currentMarketPrice: 56,
+    platformPrice: 48,
+    unit: 'L',
+    availableQuantity: 800,
+    demand: 450,
+    expectedDemand: 500,
+    qualityGrade: 'Grade A',
+    sourceFpoId: 'FPO-MND-05',
+    sourceFpoName: 'Mandya Dairy Collective',
+    sourceLocation: 'Mandya, Karnataka',
+    description: 'Farm-fresh raw unpasteurized chilled milk collected at 4°C within 2 hours of milking. Rich in A2 beta-casein with 6.5% fat.',
+    image: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=600&auto=format&fit=crop&q=80',
+    mandiBenchmarkLocation: 'Bengaluru Dairy Market',
+    shelfLifeDays: 2,
   }
 ];
 
