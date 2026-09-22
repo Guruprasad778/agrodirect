@@ -12,6 +12,7 @@ export type DeliverySlot =
   | 'Tomorrow Evening';
 
 export type OrderStatus = 
+  | 'Order Confirmed'
   | 'Pending FPO' 
   | 'Harvest Assigned' 
   | 'In Transit to Hub' 
@@ -19,7 +20,38 @@ export type OrderStatus =
   | 'Out for Delivery' 
   | 'Delivered';
 
-export type PaymentStatus = 'Paid' | 'Pre-Authorized' | 'Pending';
+export type PaymentStatus = 'Paid' | 'Pre-Authorized' | 'Pending' | 'Failed' | 'Cancelled';
+
+export type PaymentMethod = 
+  | 'gpay' 
+  | 'phonepe' 
+  | 'paytm' 
+  | 'upi_id' 
+  | 'upi_qr' 
+  | 'cod';
+
+export interface DeliveryAddress {
+  name: string;
+  phone: string;
+  address: string;
+  city: string;
+  pincode: string;
+  saveAddress?: boolean;
+}
+
+export interface CartItem {
+  productId: string;
+  productName: string;
+  variety: string;
+  qualityGrade: string;
+  unit: string;
+  image: string;
+  pricePerUnit: number;
+  marketPrice: number;
+  quantity: number;
+  itemTotal: number;
+  sourceFpoName: string;
+}
 
 export interface OrderItem {
   productId: string;
@@ -36,6 +68,7 @@ export interface ConsumerOrder {
   consumerName: string;
   consumerType: ConsumerType;
   location: string;
+  deliveryAddress?: DeliveryAddress;
   items: OrderItem[];
   totalQuantity: number;
   totalAmount: number;
@@ -44,6 +77,8 @@ export interface ConsumerOrder {
   deliverySlot: DeliverySlot;
   status: OrderStatus;
   paymentStatus: PaymentStatus;
+  paymentMethod?: PaymentMethod;
+  transactionRef?: string;
   assignedFpoId?: string;
   assignedDarkStoreId?: string;
   assignedDriverId?: string;
@@ -54,10 +89,10 @@ export interface ConsumerOrder {
 export interface Product {
   id: string;
   name: string;
-  category: 'Vegetables' | 'Staples' | 'Fruits';
+  category: 'Vegetables' | 'Staples' | 'Fruits' | 'Dairy';
   variety: string;
-  currentMarketPrice: number; // AgMarknet 2.0 reference price (₹/kg)
-  platformPrice: number;       // Direct platform farmgate price (₹/kg)
+  currentMarketPrice: number; // AgMarknet 2.0 reference price (₹/kg) - benchmark ONLY
+  platformPrice: number;       // Direct platform selling price (₹/kg) - 100% ADMIN CONTROLLED
   unit: string;
   availableQuantity: number;
   demand: number;
@@ -70,6 +105,7 @@ export interface Product {
   image: string;
   mandiBenchmarkLocation: string;
   shelfLifeDays: number;
+  inStock?: boolean;
 }
 
 export interface Farmer {

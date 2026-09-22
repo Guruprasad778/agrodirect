@@ -6,13 +6,12 @@ import {
   Warehouse, 
   Truck, 
   RotateCcw, 
-  Play, 
   Pause, 
   Smartphone, 
   Monitor, 
   Sparkles,
   CheckCircle2,
-  ExternalLink
+  SlidersHorizontal
 } from 'lucide-react';
 import { useSupplyChain } from '../../store/supplyChainStore';
 
@@ -29,7 +28,9 @@ export const TopNavBar: React.FC = () => {
     stopAutoDemo, 
     resetAllData,
     orders,
-    batches
+    batches,
+    cartCount,
+    setIsAdminPriceControlOpen
   } = useSupplyChain();
 
   const pendingBatches = batches.filter(b => b.payoutStatus !== 'Paid').length;
@@ -46,7 +47,7 @@ export const TopNavBar: React.FC = () => {
           </span>
           <span className="text-slate-300 hidden sm:inline">•</span>
           <span className="text-slate-200 text-[11px] hidden md:inline">
-            Unified Indian Farmgate-to-Fork Autonomous Logistics Network
+            AgroDirect: Unified Indian Farmgate-to-Fork Autonomous Logistics Network
           </span>
         </div>
 
@@ -57,30 +58,33 @@ export const TopNavBar: React.FC = () => {
           </span>
           <span className="text-slate-400 hidden lg:inline">|</span>
           <span className="text-slate-300 hidden lg:inline">
-            APIs: <span className="text-white font-semibold">AgMarknet 2.0</span> • <span className="text-white font-semibold">XGBoost</span> • <span className="text-white font-semibold">OpenCV</span> • <span className="text-white font-semibold">OR-Tools</span>
+            APIs: <span className="text-white font-semibold">AgMarknet 2.0</span> • <span className="text-white font-semibold">UPI Intent</span> • <span className="text-white font-semibold">XGBoost</span> • <span className="text-white font-semibold">OpenCV</span> • <span className="text-white font-semibold">OR-Tools</span>
           </span>
         </div>
       </div>
 
       {/* Main Navigation Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 gap-4">
-          {/* Brand Logo */}
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between h-16 gap-3">
+          {/* Brand Logo - AgroDirect */}
+          <div 
+            onClick={() => setActiveScreen('consumer')}
+            className="flex items-center gap-3 cursor-pointer"
+          >
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-forest flex items-center justify-center shadow-md shadow-emerald-500/20 text-white">
               <Sprout className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-extrabold text-xl tracking-tight text-slate-900 font-sans">
-                  Agri<span className="text-emerald-600">Setu</span>
+                  Agro<span className="text-emerald-600">Direct</span>
                 </span>
                 <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded">
-                  v2.4
+                  v2.5
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 hidden sm:block">
-                Farm-to-Fork Supply Chain Operating System
+                Farmgate-to-Fork Direct Agriculture Marketplace
               </p>
             </div>
           </div>
@@ -89,7 +93,7 @@ export const TopNavBar: React.FC = () => {
           <nav className="flex items-center p-1 bg-slate-100/90 rounded-xl border border-slate-200">
             <button
               onClick={() => setActiveScreen('consumer')}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-150 ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-150 relative ${
                 activeScreen === 'consumer'
                   ? 'bg-white text-emerald-700 shadow-sm border border-slate-200/80'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
@@ -98,7 +102,12 @@ export const TopNavBar: React.FC = () => {
             >
               <ShoppingBag className="w-4 h-4 text-emerald-600" />
               <span className="hidden md:inline">1. Consumer App</span>
-              <span className="md:hidden">Consumer</span>
+              <span className="md:hidden">Shop</span>
+              {cartCount > 0 && (
+                <span className="px-1.5 py-0.2 bg-emerald-600 text-white text-[9px] font-black rounded-full">
+                  {cartCount}
+                </span>
+              )}
             </button>
 
             <button
@@ -150,8 +159,18 @@ export const TopNavBar: React.FC = () => {
             </button>
           </nav>
 
-          {/* Device Frame Switcher & Demo Quick Actions */}
+          {/* Action Buttons: Price Control, Auto Demo, View Mode, Reset */}
           <div className="flex items-center gap-2">
+            {/* Admin Price Control Button */}
+            <button
+              onClick={() => setIsAdminPriceControlOpen(true)}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-300 shadow-xs transition-all"
+              title="Admin Price Control: Manually Configure Selling Prices"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-700" />
+              <span className="hidden xl:inline">Price Control</span>
+            </button>
+
             {/* View Mode (Desktop vs Mobile Frame for consumer/driver) */}
             {(activeScreen === 'consumer' || activeScreen === 'driver') && (
               <div className="hidden lg:flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200">
